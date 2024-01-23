@@ -1,0 +1,1 @@
+from xm_solarlib.pvfactors.viewfactors.calculator import VFCalculator  # noqa: F401

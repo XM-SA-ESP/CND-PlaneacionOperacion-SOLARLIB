@@ -15,8 +15,6 @@ stages:
   jobs:
     - job: TestAndSscan
       displayName: 'Test and scan'
-      variables:
-      - group: xm-solarlib
 
       steps:
         - script: pip install --upgrade poetry tox

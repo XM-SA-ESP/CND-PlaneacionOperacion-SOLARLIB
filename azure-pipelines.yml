@@ -39,8 +39,8 @@ stages:
             SonarQube: 'SC_SONAR_CODEQUALITY'
             scannerMode: 'CLI'
             configMode: 'manual'
-            cliProjectKey: '79ac70db-fe01-421a-82da-2a47fb87ece8'
-            cliProjectName: 'XM.SOLARLIB'
+            cliProjectKey: $(system.teamProject)
+            cliProjectName: $(system.teamProject)
             extraProperties: |
               sonar.exclusions=**/*.bin,**/test_*
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
@@ -55,22 +55,22 @@ stages:
           displayName: "Running SonarQube scanner"
         - script: python3 setup.py sdist bdist_wheel
           displayName: 'Generar gz'
-        - task: PublishBuildArtifacts@1
-          displayName: 'Guardar build'
-          inputs:
-            PathtoPublish: 'dist'
-            ArtifactName: 'xm_solarlib_build'
-            publishLocation: 'Container'
-        - bash: |
-            echo "Directorio build: $(Build.ArtifactStagingDirectory)"
-            echo "Contenido del Directorio:"
-            ls -la
-        - ${{ if in(variables['Build.SourceBranchName'], 'main') }}:
-          - script: poetry build
-            displayName: 'Build package'
-          - script: echo "machine pkgs.dev.azure.com login $(username) password $(token)" > ~/.netrc
-            displayName: 'Configure .netrc'
-          - script: |
-              poetry config repositories.xm-solarlib https://pkgs.dev.azure.com/XM-Mercado/b41b22c4-616e-4744-a092-da2cc2d2b926/_packaging/XM-Feed-SOLARLIB/pypi/upload/
-              poetry publish --repository xm-solarlib -u $(username) -p $(token)
-            displayName: 'Publish Library'
+        #- task: PublishBuildArtifacts@1
+        #  displayName: 'Guardar build'
+        #  inputs:
+        #    PathtoPublish: 'dist'
+        #    ArtifactName: 'xm_solarlib_build'
+        #    publishLocation: 'Container'
+        #- bash: |
+        #    echo "Directorio build: $(Build.ArtifactStagingDirectory)"
+        #    echo "Contenido del Directorio:"
+        #    ls -la
+        #- ${{ if in(variables['Build.SourceBranchName'], 'main') }}:
+        #  - script: poetry build
+        #    displayName: 'Build package'
+        #  - script: echo "machine pkgs.dev.azure.com login $(username) password $(token)" > ~/.netrc
+        #    displayName: 'Configure .netrc'
+          #- script: |
+          #    poetry config repositories.xm-solarlib https://pkgs.dev.azure.com/XM-Mercado/b41b22c4-616e-4744-a092-da2cc2d2b926/_packaging/XM-Feed-SOLARLIB/pypi/upload/
+          #    poetry publish --repository xm-solarlib -u $(username) -p $(token)
+          #  displayName: 'Publish Library'

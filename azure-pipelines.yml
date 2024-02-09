@@ -8,7 +8,7 @@ pr:
   - main
 
 pool:
-  name: 'DevOps XM Linux'
+  name: 'Azure DevOps XM'
 
 stages:
 - stage: ContinuosIntegration

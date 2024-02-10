@@ -37,8 +37,8 @@ stages:
             SonarQube: 'SC_SONAR_CODEQUALITY'
             scannerMode: 'CLI'
             configMode: 'manual'
-            cliProjectKey: $(system.teamProject)
-            cliProjectName: $(system.teamProject)
+            cliProjectKey: RP-CND-PlaneacionOperacion-SOLARLIB
+            cliProjectName: RP-CND-PlaneacionOperacion-SOLARLIB
             extraProperties: |
               sonar.exclusions=**/*.bin,**/test_*
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml

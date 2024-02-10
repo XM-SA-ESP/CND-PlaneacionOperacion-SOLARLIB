@@ -1,14 +1,8 @@
-variables:
-  pullRequestId: $(System.PullRequest.PullRequestId)
-
 trigger:
   - master
 
-pr:
-  - master
-
 pool:
-  name: 'Azure DevOps XM'
+  name: 'DevOps XM Linux'
 
 stages:
 - stage: ContinuosIntegration
@@ -19,17 +13,24 @@ stages:
       steps:
         - script: pip install --upgrade poetry tox
           displayName: 'Install pip'
+
         - script: |
             curl -sSL https://install.python-poetry.org | python3 -
           displayName: 'Install Poetry'
+
         - script: |
             echo "##vso[task.prependpath]$HOME/.local/bin"
           displayName: 'Add Poetry to PATH'
+
         - script: echo $PATH
           displayName: 'Check PATH'
+
         - script: poetry --version
           displayName: 'Check Poetry Version'
-        - script: poetry install
+
+        - script: |
+           poetry lock
+           poetry install
           displayName: 'Install dependencies with Poetry'
         - task: SonarQubePrepare@5
           displayName: 'Preparing SonarQube scanner'
@@ -37,26 +38,22 @@ stages:
             SonarQube: 'SC_SONAR_CODEQUALITY'
             scannerMode: 'CLI'
             configMode: 'manual'
-            cliProjectKey: RP-CND-PlaneacionOperacion-SOLARLIB
-            cliProjectName: RP-CND-PlaneacionOperacion-SOLARLIB
+            cliProjectKey: $(system.teamProject)
+            cliProjectName: $(system.teamProject)
             extraProperties: |
               sonar.exclusions=**/*.bin,**/test_*
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+
         - script: poetry run pytest
           displayName: 'Run Tests'
           continueOnError: true
-        - bash: |
-            echo "Directorio Actual: $(pwd)"
-            echo "Contenido del Directorio:"
-            ls -la
+        
         - task: SonarQubeAnalyze@5
-          displayName: "Running SonarQube scanner"
-        - script: python3 setup.py sdist bdist_wheel
-          displayName: 'Generar gz'
+          inputs:
+            jdkversion: 'JAVA_HOME_11_X64'
         - task: SonarQubePublish@5
           inputs:
             pollingTimeoutSec: '300'
         - task: sonar-buildbreaker@8
           inputs:
             SonarQube: 'SC_SONAR_CODEQUALITY'
-        

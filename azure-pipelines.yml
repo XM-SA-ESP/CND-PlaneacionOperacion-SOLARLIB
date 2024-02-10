@@ -2,10 +2,10 @@ variables:
   pullRequestId: $(System.PullRequest.PullRequestId)
 
 trigger:
-  - main
+  - master
 
 pr:
-  - main
+  - master
 
 pool:
   name: 'Azure DevOps XM'

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xm-solarlib"
-version = "0.1.2"
+version = "0.1.6"
 description = ""
 authors = ["Jhonatan Acelas Arevalo <jhonatanacelas@gmail.com>"]
 readme = "README.md"

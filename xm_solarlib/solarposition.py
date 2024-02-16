@@ -517,7 +517,7 @@ def ephemeris(time, latitude, longitude, pressure=101325, temperature=12):
     longitude = -1 * longitude
 
     abber = 20 / 3600.
-    LatR = np.radians(latitude)
+    latr = np.radians(latitude)
 
     # el algoritmo SPA necesita que el tiempo se exprese en términos de
     # horas decimales UTC del día del año.
@@ -530,100 +530,100 @@ def ephemeris(time, latitude, longitude, pressure=101325, temperature=12):
 
     # eliminar el día del año y calcular la hora decimal
     dayofyear = time_utc.dayofyear
-    DecHours = (time_utc.hour + time_utc.minute/60. + time_utc.second/3600. +
+    dec_hours = (time_utc.hour + time_utc.minute/60. + time_utc.second/3600. +
                 time_utc.microsecond/3600.e6)
 
     # np.array necesario para pandas > 0.20
-    UnivDate = np.array(dayofyear)
-    UnivHr = np.array(DecHours)
+    univ_date = np.array(dayofyear)
+    univ_hr = np.array(dec_hours)
 
-    Yr = np.array(time_utc.year) - 1900
-    YrBegin = 365 * Yr + np.floor((Yr - 1) / 4.) - 0.5
+    y_r = np.array(time_utc.year) - 1900
+    yr_begin = 365 * y_r + np.floor((y_r - 1) / 4.) - 0.5
 
-    Ezero = YrBegin + UnivDate
-    T = Ezero / 36525.
+    e_zero = yr_begin + univ_date
+    T = e_zero / 36525.
 
     # Calcular el Tiempo Sidéreo Medio de Greenwich (GMST)
     GMST0 = 6 / 24. + 38 / 1440. + (
         45.836 + 8640184.542 * T + 0.0929 * T ** 2) / 86400.
     GMST0 = 360 * (GMST0 - np.floor(GMST0))
-    GMSTi = np.mod(GMST0 + 360 * (1.0027379093 * UnivHr / 24.), 360)
+    gmst_i = np.mod(GMST0 + 360 * (1.0027379093 * univ_hr / 24.), 360)
 
     # Tiempo Sidéreo Local Aparente
-    LocAST = np.mod((360 + GMSTi - longitude), 360)
+    loc_ast = np.mod((360 + gmst_i - longitude), 360)
 
-    EpochDate = Ezero + UnivHr / 24.
-    T1 = EpochDate / 36525.
+    epoch_date = e_zero + univ_hr / 24.
+    T1 = epoch_date / 36525.
 
-    ObliquityR = np.radians(
+    obliquity_r = np.radians(
         23.452294 - 0.0130125 * T1 - 1.64e-06 * T1 ** 2 + 5.03e-07 * T1 ** 3)
-    MlPerigee = 281.22083 + 4.70684e-05 * EpochDate + 0.000453 * T1 ** 2 + (
+    ml_perigee = 281.22083 + 4.70684e-05 * epoch_date + 0.000453 * T1 ** 2 + (
         3e-06 * T1 ** 3)
-    MeanAnom = np.mod((358.47583 + 0.985600267 * EpochDate - 0.00015 *
+    mean_anom = np.mod((358.47583 + 0.985600267 * epoch_date - 0.00015 *
                        T1 ** 2 - 3e-06 * T1 ** 3), 360)
-    Eccen = 0.01675104 - 4.18e-05 * T1 - 1.26e-07 * T1 ** 2
-    EccenAnom = MeanAnom
+    eccen = 0.01675104 - 4.18e-05 * T1 - 1.26e-07 * T1 ** 2
+    eccen_anom = mean_anom
     E = 0
 
-    while np.max(abs(EccenAnom - E)) > 0.0001:
-        E = EccenAnom
-        EccenAnom = MeanAnom + np.degrees(Eccen)*np.sin(np.radians(E))
+    while np.max(abs(eccen_anom - E)) > 0.0001:
+        E = eccen_anom
+        eccen_anom = mean_anom + np.degrees(eccen)*np.sin(np.radians(E))
 
-    TrueAnom = (
-        2 * np.mod(np.degrees(np.arctan2(((1 + Eccen) / (1 - Eccen)) ** 0.5 *
-                   np.tan(np.radians(EccenAnom) / 2.), 1)), 360))
-    EcLon = np.mod(MlPerigee + TrueAnom, 360) - abber
-    EcLonR = np.radians(EcLon)
-    DecR = np.arcsin(np.sin(ObliquityR)*np.sin(EcLonR))
+    true_nom = (
+        2 * np.mod(np.degrees(np.arctan2(((1 + eccen) / (1 - eccen)) ** 0.5 *
+                   np.tan(np.radians(eccen_anom) / 2.), 1)), 360))
+    ec_lon = np.mod(ml_perigee + true_nom, 360) - abber
+    ec_lon_r = np.radians(ec_lon)
+    dec_r = np.arcsin(np.sin(obliquity_r)*np.sin(ec_lon_r))
 
-    RtAscen = np.degrees(np.arctan2(np.cos(ObliquityR)*np.sin(EcLonR),
-                                    np.cos(EcLonR)))
+    rt_ascen = np.degrees(np.arctan2(np.cos(obliquity_r)*np.sin(ec_lon_r),
+                                    np.cos(ec_lon_r)))
 
-    HrAngle = LocAST - RtAscen
-    HrAngleR = np.radians(HrAngle)
-    HrAngle = HrAngle - (360 * (abs(HrAngle) > 180))
+    hr_angle = loc_ast - rt_ascen
+    hr_angle_r = np.radians(hr_angle)
+    hr_angle = hr_angle - (360 * (abs(hr_angle) > 180))
 
-    SunAz = np.degrees(np.arctan2(-np.sin(HrAngleR),
-                                  np.cos(LatR)*np.tan(DecR) -
-                                  np.sin(LatR)*np.cos(HrAngleR)))
-    SunAz[SunAz < 0] += 360
+    sun_az = np.degrees(np.arctan2(-np.sin(hr_angle_r),
+                                  np.cos(latr)*np.tan(dec_r) -
+                                  np.sin(latr)*np.cos(hr_angle_r)))
+    sun_az[sun_az < 0] += 360
 
-    SunEl = np.degrees(np.arcsin(
-        np.cos(LatR) * np.cos(DecR) * np.cos(HrAngleR) +
-        np.sin(LatR) * np.sin(DecR)))
+    sun_el = np.degrees(np.arcsin(
+        np.cos(latr) * np.cos(dec_r) * np.cos(hr_angle_r) +
+        np.sin(latr) * np.sin(dec_r)))
 
-    SolarTime = (180 + HrAngle) / 15.
+    solar_time = (180 + hr_angle) / 15.
 
     # Calcular corrección de refracción
-    Elevation = SunEl
-    TanEl = pd.Series(np.tan(np.radians(Elevation)), index=time_utc)
-    Refract = pd.Series(0, index=time_utc)
+    elevation = sun_el
+    tan_el = pd.Series(np.tan(np.radians(elevation)), index=time_utc)
+    refract = pd.Series(0, index=time_utc)
 
-    Refract[(Elevation > 5) & (Elevation <= 85)] = (
-        58.1/TanEl - 0.07/(TanEl**3) + 8.6e-05/(TanEl**5))
+    refract[(elevation > 5) & (elevation <= 85)] = (
+        58.1/tan_el - 0.07/(tan_el**3) + 8.6e-05/(tan_el**5))
 
-    Refract[(Elevation > -0.575) & (Elevation <= 5)] = (
-        Elevation *
-        (-518.2 + Elevation*(103.4 + Elevation*(-12.79 + Elevation*0.711))) +
+    refract[(elevation > -0.575) & (elevation <= 5)] = (
+        elevation *
+        (-518.2 + elevation*(103.4 + elevation*(-12.79 + elevation*0.711))) +
         1735)
 
-    Refract[(Elevation > -1) & (Elevation <= -0.575)] = -20.774 / TanEl
+    refract[(elevation > -1) & (elevation <= -0.575)] = -20.774 / tan_el
 
-    Refract *= (283/(273. + temperature)) * (pressure/101325.) / 3600.
+    refract *= (283/(273. + temperature)) * (pressure/101325.) / 3600.
 
-    ApparentSunEl = SunEl + Refract
+    apparent_sun_el = sun_el + refract
 
     # crear DataFrame de salida
-    DFOut = pd.DataFrame(index=time_utc)
-    DFOut['apparent_elevation'] = ApparentSunEl
-    DFOut['elevation'] = SunEl
-    DFOut['azimuth'] = SunAz
-    DFOut['apparent_zenith'] = 90 - ApparentSunEl
-    DFOut['zenith'] = 90 - SunEl
-    DFOut['solar_time'] = SolarTime
-    DFOut.index = time
+    df_out = pd.DataFrame(index=time_utc)
+    df_out['apparent_elevation'] = apparent_sun_el
+    df_out['elevation'] = sun_el
+    df_out['azimuth'] = sun_az
+    df_out['apparent_zenith'] = 90 - apparent_sun_el
+    df_out['zenith'] = 90 - sun_el
+    df_out['solar_time'] = solar_time
+    df_out.index = time
 
-    return DFOut
+    return df_out
 
 def _spa_python_import(how):
     "Compila spa.py de manera apropiada"

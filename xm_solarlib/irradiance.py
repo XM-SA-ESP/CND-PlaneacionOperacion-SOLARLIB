@@ -902,7 +902,7 @@ def reindl(
     cos_solar_zenith = tools.cosd(solar_zenith)
 
     # ratio of titled and horizontal beam irradiance
-    Rb = cos_tt / np.maximum(cos_solar_zenith, 0.01745)  # GH 432
+    rb = cos_tt / np.maximum(cos_solar_zenith, 0.01745)  # GH 432
 
     # Anisotropy Index
     AI = dni / dni_extra
@@ -917,7 +917,7 @@ def reindl(
     with np.errstate(invalid="ignore", divide="ignore"):
         hb_to_ghi = np.where(ghi == 0, 0, np.divide(HB, ghi))
     term3 = 1 + np.sqrt(hb_to_ghi) * (tools.sind(0.5 * surface_tilt) ** 3)
-    sky_diffuse = dhi * (AI * Rb + term1 * term2 * term3)
+    sky_diffuse = dhi * (AI * rb + term1 * term2 * term3)
     sky_diffuse = np.maximum(sky_diffuse, 0)
 
     return sky_diffuse

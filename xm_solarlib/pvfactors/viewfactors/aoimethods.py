@@ -382,15 +382,20 @@ class AOIMethods:
                                   | (gnd_surf.length < DISTANCE_TOLERANCE), 0.,
                                   vf_aoi_raw)
  
-            # Final result depends on whether front or back surface
-            if is_left:
-                vf_aoi = (np.where(tilted_to_left, 0., vf_aoi_raw) if is_back
-                          else np.where(tilted_to_left, vf_aoi_raw, 0.))
-            else:
-                vf_aoi = (np.where(tilted_to_left, vf_aoi_raw, 0.) if is_back
-                          else np.where(tilted_to_left, 0., vf_aoi_raw))
+            vf_aoi = self._final_result_pvrow_surf_to_gnd_surf_obstruction(tilted_to_left, vf_aoi_raw, is_back, is_left)
  
         return vf_aoi
+    
+    def _final_result_pvrow_surf_to_gnd_surf_obstruction(self,tilted_to_left, vf_aoi_raw , is_back, is_left):
+    # Final result depends on whether front or back surface
+        if is_left:
+            vf_aoi = (np.where(tilted_to_left, 0., vf_aoi_raw) if is_back
+                        else np.where(tilted_to_left, vf_aoi_raw, 0.))
+        else:
+            vf_aoi = (np.where(tilted_to_left, vf_aoi_raw, 0.) if is_back
+                        else np.where(tilted_to_left, 0., vf_aoi_raw))
+        return vf_aoi
+
 
     def _determine_no_obstruction(self, is_left, pvrow_idx, n_pvrows):
         """Determine if there is no obstruction."""

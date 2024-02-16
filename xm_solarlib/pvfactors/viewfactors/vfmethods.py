@@ -41,66 +41,41 @@ class VFTsMethods(object):
             front = ts_pvrow.front
             for pvrow_surf in front.all_ts_surfaces:
                 if pvrow_surf.is_empty:
-                    # do no run calculation for this surface
-                    continue
+                    continue # do no run calculation for this surface
                 ts_length = pvrow_surf.length
                 i = pvrow_surf.index
-                for gnd_surf in left_gnd_surfaces:
-                    if gnd_surf.is_empty:
-                        # do no run this calculation
-                        continue
-                    j = gnd_surf.index
-                    vf_pvrow_to_gnd, vf_gnd_to_pvrow = (
-                        self.vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
-                            pvrow_surf, idx_pvrow, n_pvrows,
-                            tilted_to_left, ts_pvrows, gnd_surf, ts_length,
-                            is_back=False, is_left=True))
-                    vf_matrix[i, j, :] = vf_pvrow_to_gnd
-                    vf_matrix[j, i, :] = vf_gnd_to_pvrow
-                for gnd_surf in right_gnd_surfaces:
-                    if gnd_surf.is_empty:
-                        # do no run this calculation
-                        continue
-                    j = gnd_surf.index
-                    vf_pvrow_to_gnd, vf_gnd_to_pvrow = (
-                        self.vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
-                            pvrow_surf, idx_pvrow, n_pvrows,
-                            tilted_to_left, ts_pvrows, gnd_surf, ts_length,
-                            is_back=False, is_left=False))
-                    vf_matrix[i, j, :] = vf_pvrow_to_gnd
-                    vf_matrix[j, i, :] = vf_gnd_to_pvrow
+                self._process_ground_surfaces(left_gnd_surfaces,vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows,ts_length,is_back= False, is_left= True )                
+                self._process_ground_surfaces(right_gnd_surfaces,vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows,ts_length,is_back= False, is_left= False )
             # Back side
             back = ts_pvrow.back
             for pvrow_surf in back.all_ts_surfaces:
                 if pvrow_surf.is_empty:
-                    # do no run calculation for this surface
-                    continue
+                    continue # do no run calculation for this surface
                 ts_length = pvrow_surf.length
                 i = pvrow_surf.index
-                for gnd_surf in left_gnd_surfaces:
-                    if gnd_surf.is_empty:
-                        # do no run this calculation
-                        continue
-                    j = gnd_surf.index
-                    vf_pvrow_to_gnd, vf_gnd_to_pvrow = (
-                        self.vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
-                            pvrow_surf, idx_pvrow, n_pvrows,
-                            tilted_to_left, ts_pvrows, gnd_surf, ts_length,
-                            is_back=True, is_left=True))
-                    vf_matrix[i, j, :] = vf_pvrow_to_gnd
-                    vf_matrix[j, i, :] = vf_gnd_to_pvrow
-                for gnd_surf in right_gnd_surfaces:
-                    if gnd_surf.is_empty:
-                        # do no run this calculation
-                        continue
-                    j = gnd_surf.index
-                    vf_pvrow_to_gnd, vf_gnd_to_pvrow = (
-                        self.vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
-                            pvrow_surf, idx_pvrow, n_pvrows,
-                            tilted_to_left, ts_pvrows, gnd_surf, ts_length,
-                            is_back=True, is_left=False))
-                    vf_matrix[i, j, :] = vf_pvrow_to_gnd
-                    vf_matrix[j, i, :] = vf_gnd_to_pvrow
+                self._process_ground_surfaces(left_gnd_surfaces,vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows,ts_length,is_back= True, is_left= True )                
+                self._process_ground_surfaces(right_gnd_surfaces,vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows,ts_length,is_back= True, is_left= False )
+
+
+    def _process_ground_surfaces(self,gnd_surfaces, vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows,ts_length,is_back, is_left):
+        """Process view factor calculations for ground surfaces relative to a PV row surface."""
+        for gnd_surf in gnd_surfaces:
+            if gnd_surf.is_empty:
+                continue
+            self._calculate_vf(vf_matrix, i ,  pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows, gnd_surf,ts_length,is_back, is_left)
+
+
+    def _calculate_vf(self,vf_matrix, i , pvrow_surf, idx_pvrow, n_pvrows, tilted_to_left,ts_pvrows, gnd_surf, ts_length, is_back ,is_left):
+        j = gnd_surf.index
+        vf_pvrow_to_gnd, vf_gnd_to_pvrow = (
+            self.vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
+                pvrow_surf, idx_pvrow, n_pvrows,
+                tilted_to_left, ts_pvrows, gnd_surf, ts_length,
+                is_back=is_back, is_left=is_left)
+            )
+        vf_matrix[i, j, :] = vf_pvrow_to_gnd
+        vf_matrix[j, i, :] = vf_gnd_to_pvrow
+
 
     def vf_pvrow_surf_to_gnd_surf_obstruction_hottel(
             self, pvrow_surf, pvrow_idx, n_pvrows, tilted_to_left,

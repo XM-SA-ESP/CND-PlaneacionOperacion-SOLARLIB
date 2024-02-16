@@ -6,14 +6,29 @@ model (either ``solarfactors`` or the original ``pvfactors``).
 
 import pandas as pd
 import numpy as np
+from dataclasses import dataclass
 
+@dataclass
+class PvfactorsTimeseriesParams:
+    solar_azimuth: float
+    solar_zenith: float
+    surface_azimuth: float
+    surface_tilt: float
+    axis_azimuth: float
+    timestamps: list
+    dni: float
+    dhi: float
+    gcr: float
+    pvrow_height: float
+    pvrow_width: float
+    albedo: float
+    n_pvrows: int = 3
+    index_observed_pvrow: int = 1
+    rho_front_pvrow: float = 0.03
+    rho_back_pvrow: float = 0.05
+    horizon_band_angle: float = 15.0
 
-def pvfactors_timeseries(
-        solar_azimuth, solar_zenith, surface_azimuth, surface_tilt,
-        axis_azimuth, timestamps, dni, dhi, gcr, pvrow_height, pvrow_width,
-        albedo, n_pvrows=3, index_observed_pvrow=1,
-        rho_front_pvrow=0.03, rho_back_pvrow=0.05,
-        horizon_band_angle=15.):
+def pvfactors_timeseries(params: PvfactorsTimeseriesParams):
     """
     Calculate front and back surface plane-of-array irradiance on
     a fixed tilt or single-axis tracker PV array configuration using
@@ -89,6 +104,28 @@ def pvfactors_timeseries(
         Bifacial PV and Diffuse Shade on Single-Axis Trackers." 44th IEEE
         Photovoltaic Specialist Conference. 2017.
     """
+
+    # Use NumPy arrays for list attributes or attributes that could benefit from array operations
+    solar_azimuth = np.array(params.solar_azimuth)
+    solar_zenith = np.array(params.solar_zenith)
+    surface_azimuth = np.array(params.surface_azimuth)
+    surface_tilt = np.array(params.surface_tilt)
+    dni = np.array(params.dni)
+    dhi = np.array(params.dhi)
+
+    # Use other attributes directly as they are likely scalars or objects that don't need conversion
+    axis_azimuth = params.axis_azimuth
+    timestamps = params.timestamps  # Assuming this is a Pandas DatetimeIndex or similar
+    gcr = params.gcr
+    pvrow_height = params.pvrow_height
+    pvrow_width = params.pvrow_width
+    albedo = params.albedo
+    n_pvrows = params.n_pvrows
+    index_observed_pvrow = params.index_observed_pvrow
+    rho_front_pvrow = params.rho_front_pvrow
+    rho_back_pvrow = params.rho_back_pvrow
+    horizon_band_angle = params.horizon_band_angle
+
     # Convert Series, list, float inputs to numpy arrays
     solar_azimuth = np.array(solar_azimuth)
     solar_zenith = np.array(solar_zenith)

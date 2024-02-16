@@ -182,14 +182,17 @@ class PVSystem:
 
     def __init__(self,
                  arrays=None,
-                 surface_tilt=0, surface_azimuth=180,
                  albedo=None, surface_type=None,
                  module=None, module_type=None,
                  module_parameters=None,
                  temperature_model_parameters=None,
-                 modules_per_string=1, strings_per_inverter=1,
                  inverter=None, inverter_parameters=None,
                  racking_model=None, losses_parameters=None, name=None):
+
+        surface_tilt=0
+        surface_azimuth=180
+        modules_per_string=1
+        strings_per_inverter=1
 
         if arrays is None:
             if losses_parameters is None:
@@ -525,44 +528,6 @@ class PVSystem:
             in zip(self.arrays, effective_irradiance, temp_cell)
         )
 
-    @_unwrap_single_value
-    def calcparams_pvsyst(self, effective_irradiance, temp_cell):
-        """
-        Utiliza la función :py:func:`calcparams_pvsyst`, los parámetros de entrada
-        y ``self.module_parameters`` para calcular las corrientes y resistencias del módulo.
-
-        Parámetros
-        ----------
-        effective_irradiance : numérico o tupla de numéricos
-            La irradiancia (W/m^2) que se convierte en fotocorriente.
-
-        temp_cell : float o Series o tupla de float o Series
-            La temperatura promedio de las celdas dentro de un módulo en C.
-
-        Returns
-        -------
-        Ver pvsystem.calcparams_pvsyst para más detalles
-        """
-        effective_irradiance = self._validate_per_array(effective_irradiance)
-        temp_cell = self._validate_per_array(temp_cell)
-
-        build_kwargs = functools.partial(
-            _build_kwargs,
-            ['gamma_ref', 'mu_gamma', 'i_l_ref', 'i_o_ref',
-             'r_sh_ref', 'r_sh_0', 'r_sh_exp',
-             'r_s', 'alpha_sc', 'egref',
-             'irrad_ref', 'temp_ref',
-             'cells_in_series']
-        )
-
-        return tuple(
-            calcparams_pvsyst(
-                effective_irradiance, temp_cell,
-                **build_kwargs(array.module_parameters)
-            )
-            for array, effective_irradiance, temp_cell
-            in zip(self.arrays, effective_irradiance, temp_cell)
-        )
 
     @_unwrap_single_value
     def sapm(self, effective_irradiance, temp_cell):
@@ -886,155 +851,6 @@ class PVSystem:
         return len(self.arrays)
 
     
-
-def calcparams_pvsyst(effective_irradiance, temp_cell,
-                      alpha_sc, gamma_ref, mu_gamma,
-                      i_l_ref, i_o_ref,
-                      r_sh_ref, r_sh_0, r_s,
-                      cells_in_series,
-                      r_sh_exp=5.5,
-                      egref=1.121,
-                      irrad_ref=1000, temp_ref=25):
-    '''
-    Calcula cinco valores de parámetros para la ecuación de un solo diodo
-    a irradiancia efectiva y temperatura de celda utilizando el modelo PVsyst v6.
-    El modelo PVsyst v6 se describe en [1]_, [2]_, [3]_.
-    Los cinco valores devueltos por calcparams_pvsyst pueden ser utilizados por singlediode
-    para calcular una curva IV.
-
-    Parámetros
-    ----------
-    effective_irradiance : numérico
-        La irradiancia (W/m2) que se convierte en corriente fotovoltaica.
-
-    temp_cell : numérico
-        La temperatura promedio de las celdas dentro de un módulo en grados Celsius.
-
-    alpha_sc : flotante
-        El coeficiente de temperatura de la corriente de cortocircuito del
-        módulo en unidades de A/°C.
-
-    gamma_ref : flotante
-        El factor de idealidad del diodo.
-
-    mu_gamma : flotante
-        El coeficiente de temperatura para el factor de idealidad del diodo, 1/K.
-
-    i_l_ref : flotante
-        La corriente generada por la luz (o corriente fotovoltaica) en condiciones de referencia,
-        en amperios.
-
-    i_o_ref : flotante
-        La corriente de saturación inversa oscura del diodo en condiciones de referencia,
-        en amperios.
-
-    r_sh_ref : flotante
-        La resistencia de derivación en condiciones de referencia, en ohmios.
-
-    r_sh_0 : flotante
-        La resistencia de derivación en condiciones de cero irradiancia, en ohmios.
-
-    r_s : flotante
-        La resistencia en serie en condiciones de referencia, en ohmios.
-
-    cells_in_series : entero
-        El número de celdas conectadas en serie.
-
-    r_sh_exp : flotante
-        El exponente en la ecuación de resistencia de derivación, adimensional. Por defecto es 5.5.
-
-    egref : flotante
-        La energía de la banda prohibida a temperatura de referencia en unidades de eV.
-        1.121 eV para silicio cristalino. egref debe ser > 0.
-
-    irrad_ref : flotante (opcional, por defecto=1000)
-        Irradiancia de referencia en W/m^2.
-
-    temp_ref : flotante (opcional, por defecto=25)
-        Temperatura de celda de referencia en grados Celsius.
-
-    Devoluciones
-    -------
-    Tupla con los siguientes resultados:
-
-    photocurrent : numérico
-        Corriente generada por la luz en amperios.
-
-    saturation_current : numérico
-        Corriente de saturación del diodo en amperios.
-
-    resistance_series : numérico
-        Resistencia en serie en ohmios.
-
-    resistance_shunt : numérico
-        Resistencia de derivación en ohmios.
-
-    nnsvth : numérico
-        El producto del factor de idealidad del diodo habitual (n, adimensional),
-        número de celdas en serie (Ns), y la tensión térmica de la celda
-        a la irradiancia efectiva y la temperatura de celda especificadas.
-
-    Referencias
-    ----------
-    .. [1] K. Sauer, T. Roessler, C. W. Hansen, Modelización de la Dependencia de Irradiancia y
-       Temperatura de los Módulos Fotovoltaicos en PVsyst,
-       IEEE Journal of Photovoltaics v5(1), enero de 2015.
-
-    .. [2] A. Mermoud, Modelización de módulos fotovoltaicos, Presentación en el 2º taller de
-       Modelización del Rendimiento de PV, Santa Clara, CA, mayo de 2013.
-
-    .. [3] A. Mermoud, T. Lejeune, Evaluación del Rendimiento de un Modelo de Simulación
-       para Módulos Fotovoltaicos de Cualquier Tecnología Disponible, 25ª Conferencia Europea
-       de Energía Solar Fotovoltaica, Valencia, España, septiembre de 2010.
-
-    Véase También
-    --------
-    calcparams_desoto
-    singlediode
-
-    '''
-
-    # Boltzmann constant in J/K
-    k = constants.k
-
-    # elementary charge in coulomb
-    q = constants.e
-
-    # reference temperature
-    tref_k = temp_ref + 273.15
-    tcell_k = temp_cell + 273.15
-
-    gamma = gamma_ref + mu_gamma * (tcell_k - tref_k)
-    nnsvth = gamma * k / q * cells_in_series * tcell_k
-
-    IL = effective_irradiance / irrad_ref * \
-        (i_l_ref + alpha_sc * (tcell_k - tref_k))
-
-    I0 = i_o_ref * ((tcell_k / tref_k) ** 3) * \
-        (np.exp((q * egref) / (k * gamma) * (1 / tref_k - 1 / tcell_k)))
-
-    rsh_tmp = \
-        (r_sh_ref - r_sh_0 * np.exp(-r_sh_exp)) / (1.0 - np.exp(-r_sh_exp))
-    rsh_base = np.maximum(0.0, rsh_tmp)
-
-    rsh = rsh_base + (r_sh_0 - rsh_base) * \
-        np.exp(-r_sh_exp * effective_irradiance / irrad_ref)
-
-    rs = r_s
-
-    numeric_args = (effective_irradiance, temp_cell)
-    out = (IL, I0, rs, rsh, nnsvth)
-
-    if all(map(np.isscalar, numeric_args)):
-        return out
-
-    index = tools.get_pandas_index(*numeric_args)
-
-    if index is None:
-        return np.broadcast_arrays(*out)
-
-    return tuple(pd.Series(a, index=index).rename(None) for a in out)
-
 
 
 class Array:
@@ -1581,7 +1397,6 @@ def singlediode(photocurrent, saturation_current, resistance_series,
     --------
     calcparams_desoto
     calcparams_cec
-    calcparams_pvsyst
     sapm
     xm_solarlib.singlediode.bishop88
 

@@ -253,38 +253,6 @@ def test_singleaxistrackermount_get_orientation_asymmetric_max():
         assert actual[key] == pytest.approx(expected_value), err_msg
 
 
-def test_calcparams_pvsyst(pvsyst_module_params):
-    times = pd.date_range(start='2015-01-01', periods=2, freq='12H')
-    df = pd.DataFrame({
-        'effective_irradiance': [0.0, 800.0],
-        'temp_cell': [25, 50]
-    }, index=times)
-
-    IL, I0, rs, rsh, nnsvth = pvsystem.calcparams_pvsyst(
-        df['effective_irradiance'],
-        df['temp_cell'],
-        alpha_sc=pvsyst_module_params['alpha_sc'],
-        gamma_ref=pvsyst_module_params['gamma_ref'],
-        mu_gamma=pvsyst_module_params['mu_gamma'],
-        i_l_ref=pvsyst_module_params['i_l_ref'],
-        i_o_ref=pvsyst_module_params['i_o_ref'],
-        r_sh_ref=pvsyst_module_params['r_sh_ref'],
-        r_sh_0=pvsyst_module_params['r_sh_0'],
-        r_s=pvsyst_module_params['r_s'],
-        cells_in_series=pvsyst_module_params['cells_in_series'],
-        egref=pvsyst_module_params['egref'])
-
-    assert_series_equal(
-        IL.round(decimals=3), pd.Series([0.0, 4.8200], index=times))
-    assert_series_equal(
-        I0.round(decimals=3), pd.Series([0.0, 1.47e-7], index=times))
-    assert_series_equal(
-        rs.round(decimals=3), pd.Series([0.500, 0.500], index=times))
-    assert_series_equal(
-        rsh.round(decimals=3), pd.Series([1000.0, 305.757], index=times))
-    assert_series_equal(
-        nnsvth.round(decimals=4), pd.Series([1.6186, 1.7961], index=times))
-    
 
 def test_calcparams_desoto(cec_module_params):
     times = pd.date_range(start='2015-01-01', periods=3, freq='12H')

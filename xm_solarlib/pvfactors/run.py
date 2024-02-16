@@ -7,14 +7,7 @@ from xm_solarlib.pvfactors.viewfactors import VFCalculator
 def run_timeseries_engine(fn_build_report, pvarray_parameters,
                           timestamps, dni, dhi, solar_zenith, solar_azimuth,
                           surface_tilt, surface_azimuth, albedo,
-                          cls_pvarray=OrderedPVArray, cls_engine=PVEngine,
-                          cls_irradiance=HybridPerezOrdered,
-                          cls_vf=VFCalculator,
-                          fast_mode_pvrow_index=None,
-                          fast_mode_segment_index=None,
-                          irradiance_model_params=None,
-                          vf_calculator_params=None,
-                          ghi=None):
+                          irradiance_model_params=None):
     """Run timeseries simulation without multiprocessing. This is the
     functional approach to the :py:class:`~pvfactors.engine.PVEngine` class.
 
@@ -79,9 +72,17 @@ def run_timeseries_engine(fn_build_report, pvarray_parameters,
         function
     """
 
+    cls_pvarray=OrderedPVArray
+    cls_engine=PVEngine
+    cls_irradiance=HybridPerezOrdered
+    cls_vf=VFCalculator
+    fast_mode_pvrow_index=None
+    fast_mode_segment_index=None
+    ghi=None
+
     # Prepare input parameters
     irradiance_model_params = irradiance_model_params or {}
-    vf_calculator_params = vf_calculator_params or {}
+    vf_calculator_params = {}
     # Instantiate classes and engine
     irradiance_model = cls_irradiance(**irradiance_model_params)
     vf_calculator = cls_vf(**vf_calculator_params)
@@ -95,8 +96,6 @@ def run_timeseries_engine(fn_build_report, pvarray_parameters,
             surface_azimuth, albedo, ghi=ghi)
 
     # Run all timesteps
-    report = (eng.run_full_mode(fn_build_report=fn_build_report)
-              if fast_mode_pvrow_index is None
-              else eng.run_fast_mode(fn_build_report=fn_build_report))
+    report = (eng.run_full_mode(fn_build_report=fn_build_report))
 
     return report

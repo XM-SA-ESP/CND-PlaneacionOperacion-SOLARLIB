@@ -742,8 +742,8 @@ def topocentric_sun_declination(geocentric_sun_declination, xterm, yterm,
 @jcompile('float64(float64, float64)', nopython=True)
 def topocentric_local_hour_angle(local_hour_angle,
                                  parallax_sun_right_ascension):
-    H_prime = local_hour_angle - parallax_sun_right_ascension
-    return H_prime
+    h_prime = local_hour_angle - parallax_sun_right_ascension
+    return h_prime
 
 
 @jcompile('float64(float64, float64, float64)', nopython=True)
@@ -865,7 +865,7 @@ def solar_position_loop(unixtime, loc_args, out):
             continue
         L = heliocentric_longitude(jme)
         B = heliocentric_latitude(jme)
-        Theta = geocentric_longitude(L)
+        theta = geocentric_longitude(L)
         beta = geocentric_latitude(B)
         x0 = mean_elongation(jce)
         x1 = mean_anomaly_sun(jce)
@@ -879,7 +879,7 @@ def solar_position_loop(unixtime, loc_args, out):
         epsilon0 = mean_ecliptic_obliquity(jme)
         epsilon = true_ecliptic_obliquity(epsilon0, delta_epsilon)
         delta_tau = aberration_correction(R)
-        lamd = apparent_sun_longitude(Theta, delta_psi, delta_tau)
+        lamd = apparent_sun_longitude(theta, delta_psi, delta_tau)
         v0 = mean_sidereal_time(jd, jc)
         v = apparent_sidereal_time(v0, delta_psi, epsilon)
         alpha = geocentric_sun_right_ascension(lamd, epsilon, beta)
@@ -899,15 +899,15 @@ def solar_position_loop(unixtime, loc_args, out):
         delta_alpha = parallax_sun_right_ascension(x, xi, H, delta)
         delta_prime = topocentric_sun_declination(delta, x, y, xi, delta_alpha,
                                                   H)
-        H_prime = topocentric_local_hour_angle(H, delta_alpha)
+        h_prime = topocentric_local_hour_angle(H, delta_alpha)
         e0 = topocentric_elevation_angle_without_atmosphere(lat, delta_prime,
-                                                            H_prime)
+                                                            h_prime)
         delta_e = atmospheric_refraction_correction(pressure, temp, e0,
                                                     atmos_refract)
         e = topocentric_elevation_angle(e0, delta_e)
         theta = topocentric_zenith_angle(e)
         theta0 = topocentric_zenith_angle(e0)
-        gamma = topocentric_astronomers_azimuth(H_prime, delta_prime, lat)
+        gamma = topocentric_astronomers_azimuth(h_prime, delta_prime, lat)
         phi = topocentric_azimuth_angle(gamma)
         out[0, i] = theta
         out[1, i] = theta0
@@ -972,7 +972,7 @@ def solar_position_numpy(unixtime, lat, lon, elev, pressure, temp, delta_t,
         return (R, )
     L = heliocentric_longitude(jme)
     B = heliocentric_latitude(jme)
-    Theta = geocentric_longitude(L)
+    theta = geocentric_longitude(L)
     beta = geocentric_latitude(B)
     x0 = mean_elongation(jce)
     x1 = mean_anomaly_sun(jce)
@@ -986,7 +986,7 @@ def solar_position_numpy(unixtime, lat, lon, elev, pressure, temp, delta_t,
     epsilon0 = mean_ecliptic_obliquity(jme)
     epsilon = true_ecliptic_obliquity(epsilon0, delta_epsilon)
     delta_tau = aberration_correction(R)
-    lamd = apparent_sun_longitude(Theta, delta_psi, delta_tau)
+    lamd = apparent_sun_longitude(theta, delta_psi, delta_tau)
     v0 = mean_sidereal_time(jd, jc)
     v = apparent_sidereal_time(v0, delta_psi, epsilon)
     alpha = geocentric_sun_right_ascension(lamd, epsilon, beta)
@@ -1002,15 +1002,15 @@ def solar_position_numpy(unixtime, lat, lon, elev, pressure, temp, delta_t,
     y = yterm(u, lat, elev)
     delta_alpha = parallax_sun_right_ascension(x, xi, H, delta)
     delta_prime = topocentric_sun_declination(delta, x, y, xi, delta_alpha, H)
-    H_prime = topocentric_local_hour_angle(H, delta_alpha)
+    h_prime = topocentric_local_hour_angle(H, delta_alpha)
     e0 = topocentric_elevation_angle_without_atmosphere(lat, delta_prime,
-                                                        H_prime)
+                                                        h_prime)
     delta_e = atmospheric_refraction_correction(pressure, temp, e0,
                                                 atmos_refract)
     e = topocentric_elevation_angle(e0, delta_e)
     theta = topocentric_zenith_angle(e)
     theta0 = topocentric_zenith_angle(e0)
-    gamma = topocentric_astronomers_azimuth(H_prime, delta_prime, lat)
+    gamma = topocentric_astronomers_azimuth(h_prime, delta_prime, lat)
     phi = topocentric_azimuth_angle(gamma)
     return theta, theta0, e, e0, phi, eot
 
@@ -1158,22 +1158,22 @@ def transit_sunrise_sunset(dates, lat, lon, delta_t, numthreads):
 
     alpha_prime = ttday0_res[1] + (n * (a + b + c * n)) / 2
     delta_prime = ttday0_res[2] + (n * (ap + bp + cp * n)) / 2
-    Hp = (vs + lon - alpha_prime) % 360
-    Hp[Hp >= 180] = Hp[Hp >= 180] - 360
+    hp = (vs + lon - alpha_prime) % 360
+    hp[hp >= 180] = hp[hp >= 180] - 360
 
     h = np.degrees(np.arcsin(np.sin(np.radians(lat)) *
                              np.sin(np.radians(delta_prime)) +
                              np.cos(np.radians(lat)) *
                              np.cos(np.radians(delta_prime))
-                             * np.cos(np.radians(Hp))))
+                             * np.cos(np.radians(hp))))
 
-    T = (m[0] - Hp[0] / 360) * 86400
+    T = (m[0] - hp[0] / 360) * 86400
     R = (m[1] + (h[1] + 0.8333) / (360 * np.cos(np.radians(delta_prime[1])) *
                                    np.cos(np.radians(lat)) *
-                                   np.sin(np.radians(Hp[1])))) * 86400
+                                   np.sin(np.radians(hp[1])))) * 86400
     S = (m[2] + (h[2] + 0.8333) / (360 * np.cos(np.radians(delta_prime[2])) *
                                    np.cos(np.radians(lat)) *
-                                   np.sin(np.radians(Hp[2])))) * 86400
+                                   np.sin(np.radians(hp[2])))) * 86400
 
     S[add_a_day] += 86400
     R[sub_a_day] -= 86400

@@ -693,6 +693,7 @@ class TsGround(object):
         return list_shadow_surfaces
     
     def _first_surface(self, surface_to_merge, surface, list_shadow_surfaces: list):
+        logging.debug(f"get_ground_diffuse called with surface_type: {list_shadow_surfaces}")
         # first surface but definitely not last either
         if surface_to_merge is not None:
             coords = [surface_to_merge.boundary[0],
@@ -705,34 +706,36 @@ class TsGround(object):
             return surface
 
 
-    def _merge_shadow_surfaces_if_is_overlap_and_many_shadawns(self,idx, list_shadow_surfaces, non_pt_shadow_elements, n_shadow_elements):
+    def _merge_shadow_surfaces_if_is_overlap_and_many_shadawns(self, idx, list_shadow_surfaces, non_pt_shadow_elements, n_shadow_elements):
         # If there's only one shadow, not point in going through this
 
-        # Now go from left to right and merge shadow surfaces
         surface_to_merge = None
         for i_el, shadow_el in enumerate(non_pt_shadow_elements):
-            surfaces = shadow_el.non_point_surfaces_at(idx)
-            for i_surf, surface in enumerate(surfaces):
-                if i_surf == len(surfaces) - 1:
-                    # last surface, could also be first
-                    if i_surf == 0 and surface_to_merge is not None:
-                        surface = PVSurface(
-                            [surface_to_merge.boundary[0], surface.boundary[1]], shaded=True,
-                            param_names=self.param_names, params=surface.params, index=surface.index)
-                    if i_el == n_shadow_elements - 1:
-                        # last surface of last shadow element
-                        list_shadow_surfaces.append(surface)
-                    else:
-                        # keep for merging with next element
-                        surface_to_merge = surface
-                elif i_surf == 0:
-                    # first surface but definitely not last either
-                    list_shadow_surfaces.append(self._first_surface(surface_to_merge, surface, list_shadow_surfaces))
-                else:
-                    # not first nor last surface
-                    list_shadow_surfaces.append(surface)
+            surface_to_merge = self._process_shadow_element(idx, i_el, shadow_el, surface_to_merge, list_shadow_surfaces, n_shadow_elements)
         return list_shadow_surfaces
 
+    def _process_shadow_element(self, idx, i_el, shadow_el, surface_to_merge, list_shadow_surfaces, n_shadow_elements):
+        surfaces = shadow_el.non_point_surfaces_at(idx)
+        for i_surf, surface in enumerate(surfaces):
+            if i_surf == len(surfaces) - 1:
+                # last surface, could also be first
+                if i_surf == 0 and surface_to_merge is not None:
+                    surface = PVSurface(
+                        [surface_to_merge.boundary[0], surface.boundary[1]], shaded=True,
+                        param_names=self.param_names, params=surface.params, index=surface.index)
+                if i_el == n_shadow_elements - 1:
+                    # last surface of last shadow element
+                    list_shadow_surfaces.append(surface)
+                else:
+                    # keep for merging with next element
+                    surface_to_merge = surface
+            elif i_surf == 0:
+                # first surface but definitely not last either
+                list_shadow_surfaces.append(self._first_surface(surface_to_merge, surface, list_shadow_surfaces))
+            else:
+                # not first nor last surface
+                list_shadow_surfaces.append(surface)
+        return surface_to_merge
 class TsGroundElement(object):
     """Clase especial para elementos terrestres de series temporales: un elemento terrestre ha conocido
      límites de coordenadas de la serie temporal, pero también tendrá un desglose de

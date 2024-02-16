@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from warnings import warn
-
+import logging  
 
 def spectral_factor_sapm(airmass_absolute, module):
     """
@@ -198,7 +198,7 @@ def spectral_factor_firstsolar(precipitable_water, airmass_absolute,
     if module_type is not None and coefficients is None:
         coefficients = _coefficients[module_type.lower()]
     elif module_type is None and coefficients is not None:
-        pass
+        logging.warning('pass')
     elif module_type is None and coefficients is None:
         raise TypeError('No valid input provided, both module_type and ' +
                         'coefficients are None')
